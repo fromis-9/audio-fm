@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Backend API base URL (adjust for development vs production)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002'
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:3002')
 
 // Check if we're in demo mode by checking the backend health
 let IS_DEMO_MODE = false

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="img/afm.png" alt="audio.fm logo" width="120" height="120">
+  <img src="public/img/afm.png" alt="audio.fm logo" width="120" height="120">
   
   # audio.fm
   
