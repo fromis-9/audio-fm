@@ -20,6 +20,36 @@
 }
 
 @layer components {
+  .audiofm-title {
+    background: linear-gradient(to right, #dc0745, #8c1539);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .videofm-title {
+    background: linear-gradient(to right, #b5d4fe, #63a0f7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .cta-section {
+    @apply mt-8 text-center px-4;
+  }
+
+  .cta-container {
+    @apply max-w-md mx-auto space-y-4;
+  }
+
+  .cta-description {
+    @apply text-dark-300 text-sm;
+  }
+
+  .cta-button {
+    @apply inline-block bg-dark-700 hover:bg-dark-600 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 mt-4;
+  }
+
   .btn-primary {
     @apply bg-primary-500 hover:bg-primary-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-900;
   }

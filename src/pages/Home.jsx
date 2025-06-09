@@ -36,11 +36,11 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen flex justify-center px-4 pt-16">
+    <div className="flex justify-center px-4 pt-16 pb-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
 
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-b from-[#8c1539] to-[#c40039] bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-2 audiofm-title">
             audio.fm
           </h1>
           <p className="text-sm text-dark-300 max-w-sm mx-auto">
@@ -132,6 +132,25 @@ function Home() {
             </a>
           </p>
         </div>
+
+        <section className="cta-section">
+          <div className="cta-container">
+            <h2 className="text-2xl font-bold">
+              Try out <span className="videofm-title">video.fm</span>
+            </h2>
+            <p className="cta-description">
+            Transform your Last.fm history into video compilations
+            </p>
+            <a
+              href="https://videofm.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cta-button"
+            >
+              Visit video.fm
+            </a>
+          </div>
+        </section>
       </div>
     </div>
   )
