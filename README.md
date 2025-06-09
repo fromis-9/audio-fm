@@ -1,6 +1,10 @@
-# audio.fm
-
-Create narrated countdowns of your top Last.fm tracks with live audio previews.
+<div align="center">
+  <img src="img/afm.png" alt="audio.fm logo" width="120" height="120">
+  
+  # audio.fm
+  
+  Create narrated countdowns of your top Last.fm tracks with live audio previews.
+</div>
 
 ## Features
 
@@ -128,7 +132,6 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 - **Track Data**: [Last.fm API](https://www.last.fm/api)
 - **Audio Previews**: [Deezer API](https://developers.deezer.com)
 - **Icons**: Heroicons
-- **Inspiration**: Music discovery and countdown culture
 
 ---
 
