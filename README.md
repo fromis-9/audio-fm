@@ -20,7 +20,7 @@
 ## Tech Stack
 
 - **Frontend**: React 18 + Vite + Tailwind CSS
-- **Backend**: Node.js + Express (API proxy)
+- **Backend**: Vercel API Routes (serverless)
 - **Audio**: HTML5 Audio + Web Speech API
 - **APIs**: Last.fm + Deezer (with rate limiting & caching)
 - **Features**: Token bucket rate limiting, 5-min caching, CORS handling
@@ -47,16 +47,14 @@
 
 3. **Configure environment:**
    ```bash
-   # Create .env file in project root
-   echo "VITE_LASTFM_API_KEY=your_api_key_here" > .env
+   # Copy example env file
+   cp .env.example .env
+   
+   # Edit .env with your values
    ```
 
 4. **Start development:**
    ```bash
-   # Terminal 1: Start backend
-   cd server && npm start
-
-   # Terminal 2: Start frontend  
    npm run dev
    ```
 
@@ -71,11 +69,11 @@
 
 ## Architecture
 
-### Backend Server (`/server`)
-- **Express API** on port 3002
+### API Routes (`/api`)
+- **Serverless Functions** - Vercel Edge Runtime
 - **Rate Limiting** - Token bucket (60 requests burst, 15/sec refill)
-- **Caching** - 5-minute Redis-style in-memory cache
-- **CORS** - Configured for frontend development
+- **Caching** - 5-minute in-memory cache
+- **CORS** - Configured for production
 - **User-Agent** - Compliant with Last.fm requirements
 
 ### Frontend App (`/src`)
@@ -101,20 +99,20 @@
 
 ## Deployment
 
+The app is deployed on Vercel with automatic deployments from the main branch.
+
 ### Environment Variables
+Required environment variable in your Vercel project:
 ```bash
 VITE_LASTFM_API_KEY=your_lastfm_api_key
-PORT=3002  # Backend port (optional)
 ```
 
-### Build Commands
-```bash
-# Frontend
-npm run build
+### Deploy Your Own
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffromis-9%2Faudio-fm)
 
-# Backend (production)
-cd server && npm start
-```
+1. Click the "Deploy with Vercel" button
+2. Set up required environment variables
+3. Deploy!
 
 ## Contributing
 
