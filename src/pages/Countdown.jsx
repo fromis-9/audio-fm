@@ -50,12 +50,22 @@ function Countdown() {
       const tracksWithPreviews = []
       console.log('Processing', lastfmTracks.length, 'tracks from Last.fm')
       
+      // Process tracks in batches of 10 with delay between requests
+      const BATCH_SIZE = 10
+      const DELAY_BETWEEN_REQUESTS = 1000 // 1 second delay between requests
+
       for (let i = 0; i < lastfmTracks.length; i++) {
         const track = lastfmTracks[i]
         const artist = track.artist?.name || track.artist
         const title = track.name
         
         console.log(`Processing track ${i + 1}: ${artist} - ${title}`)
+
+        // Add delay between batches
+        if (i > 0 && i % BATCH_SIZE === 0) {
+          console.log(`Waiting ${DELAY_BETWEEN_REQUESTS}ms before next batch...`)
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS))
+        }
 
         try {
           const deezerTrack = await deezerApi.searchTrack(artist, title)

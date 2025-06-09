@@ -1,7 +1,7 @@
 // Token bucket rate limiting for Vercel API routes
 const rateLimitMap = new Map()
-const BURST_LIMIT = 60 // Allow up to 60 requests in a burst
-const REFILL_RATE = 15 // Refill 15 tokens per second  
+const BURST_LIMIT = 100 // Allow up to 100 requests in a burst
+const REFILL_RATE = 30 // Refill 30 tokens per second  
 const REFILL_INTERVAL = 1000 // Check every second
 
 export const rateLimit = (req, res) => {
