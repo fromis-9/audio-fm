@@ -149,6 +149,141 @@ app.get('/api/lastfm/top-tracks', rateLimit, async (req, res) => {
   }
 })
 
+// Custom date range endpoint - gets recent tracks and calculates top tracks
+app.get('/api/lastfm/top-tracks-range', rateLimit, async (req, res) => {
+  try {
+    const { username, from, to, limit = 50 } = req.query
+    
+    if (!LASTFM_API_KEY || LASTFM_API_KEY === 'YOUR_LASTFM_API_KEY') {
+      return res.status(400).json({ 
+        error: 'Last.fm API key not configured',
+        demo: true 
+      })
+    }
+
+    if (!from || !to) {
+      return res.status(400).json({ error: 'Both from and to timestamps are required' })
+    }
+
+    // Check cache first
+    const cacheKey = getCacheKey('lastfm-tracks-range', { username, from, to, limit })
+    const cachedData = getCachedData(cacheKey)
+    if (cachedData) {
+      console.log(`📦 Serving cached Last.fm range data for ${username}`)
+      return res.json(cachedData)
+    }
+
+    console.log(`🔍 Fetching tracks for ${username} from ${new Date(from * 1000).toDateString()} to ${new Date(to * 1000).toDateString()}`)
+
+    // Fetch all recent tracks within the date range
+    let allTracks = []
+    let page = 1
+    const maxPages = 10 // Limit to prevent excessive API calls
+    
+    while (page <= maxPages) {
+      console.log(`📄 Fetching page ${page} for ${username}`)
+      
+      const response = await axios.get(LASTFM_BASE_URL, {
+        params: {
+          method: 'user.getrecenttracks',
+          user: username,
+          api_key: LASTFM_API_KEY,
+          format: 'json',
+          from: from,
+          to: to,
+          limit: 1000, // Max per page
+          page: page
+        }
+      })
+
+      if (response.data.error) {
+        throw new Error(response.data.message || 'Last.fm API error')
+      }
+
+      const tracks = response.data.recenttracks?.track || []
+      
+      // If tracks is not an array (single track), make it an array
+      const tracksArray = Array.isArray(tracks) ? tracks : [tracks]
+      
+      // Filter out "now playing" tracks (they don't have a date)
+      const validTracks = tracksArray.filter(track => track.date)
+      
+      if (validTracks.length === 0) {
+        break // No more tracks
+      }
+      
+      allTracks = allTracks.concat(validTracks)
+      
+      // Check if there are more pages
+      const totalPages = parseInt(response.data.recenttracks['@attr']?.totalPages || 1)
+      if (page >= totalPages) {
+        break
+      }
+      
+      page++
+      
+      // Add delay between requests to respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
+
+    console.log(`📊 Processing ${allTracks.length} tracks for ${username}`)
+
+    // Count track occurrences
+    const trackCounts = new Map()
+    
+    allTracks.forEach(track => {
+      const artist = track.artist?.name || track.artist?.['#text'] || track.artist || 'Unknown Artist'
+      const trackName = track.name || 'Unknown Track'
+      const key = `${artist}|||${trackName}` // Use ||| as separator to avoid conflicts
+      
+      if (trackCounts.has(key)) {
+        const existing = trackCounts.get(key)
+        existing.playcount++
+      } else {
+        trackCounts.set(key, {
+          name: trackName,
+          artist: { name: artist },
+          playcount: 1,
+          image: track.image || [],
+          url: track.url || ''
+        })
+      }
+    })
+
+    // Convert to array and sort by playcount
+    const topTracks = Array.from(trackCounts.values())
+      .sort((a, b) => b.playcount - a.playcount)
+      .slice(0, parseInt(limit))
+      .map(track => ({
+        ...track,
+        playcount: track.playcount.toString() // Keep consistent with regular API
+      }))
+
+    console.log(`🎵 Top ${topTracks.length} tracks calculated for ${username}`)
+    
+    // Cache the successful response
+    setCachedData(cacheKey, topTracks)
+    console.log(`💾 Cached Last.fm range data for ${username}`)
+
+    res.json(topTracks)
+  } catch (error) {
+    console.error('Last.fm API range error:', error.message)
+    
+    // Return error but allow frontend to handle fallbacks
+    if (error.response?.status === 404) {
+      res.status(404).json({ 
+        error: 'User not found',
+        userNotFound: true 
+      })
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to fetch tracks from Last.fm',
+        details: error.message 
+      })
+    }
+  }
+})
+
 // Deezer API proxy with rate limiting
 app.get('/api/deezer/search', rateLimit, async (req, res) => {
   try {

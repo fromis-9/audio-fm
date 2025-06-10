@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import DateRangeSelector from '../components/DateRangeSelector'
 
 function Home() {
   const [username, setUsername] = useState('')
   const [timeRange, setTimeRange] = useState('1month')
   const [trackCount, setTrackCount] = useState('20')
   const [isLoading, setIsLoading] = useState(false)
+  const [useCustomRange, setUseCustomRange] = useState(false)
+  const [fromDate, setFromDate] = useState(null)
+  const [toDate, setToDate] = useState(null)
   const navigate = useNavigate()
 
   const timeRanges = [
@@ -15,6 +19,7 @@ function Home() {
     { value: '6month', label: 'Last 6 months' },
     { value: '12month', label: 'Last year' },
     { value: 'overall', label: 'All time' },
+    { value: 'custom', label: 'Custom date range' },
   ]
 
   const trackCounts = [
@@ -29,10 +34,38 @@ function Home() {
     e.preventDefault()
     if (!username.trim()) return
 
+    // Validate custom date range if selected
+    if (useCustomRange && (!fromDate || !toDate)) {
+      alert('Please select both from and to dates for custom range')
+      return
+    }
+
+    if (useCustomRange && fromDate >= toDate) {
+      alert('From date must be before to date')
+      return
+    }
+
     setIsLoading(true)
     
     // Navigate to countdown page with parameters
-    navigate(`/countdown?user=${encodeURIComponent(username.trim())}&period=${timeRange}&limit=${trackCount}`)
+    if (useCustomRange) {
+      const fromTimestamp = Math.floor(fromDate.getTime() / 1000)
+      const toTimestamp = Math.floor(toDate.getTime() / 1000)
+      navigate(`/countdown?user=${encodeURIComponent(username.trim())}&from=${fromTimestamp}&to=${toTimestamp}&limit=${trackCount}`)
+    } else {
+      navigate(`/countdown?user=${encodeURIComponent(username.trim())}&period=${timeRange}&limit=${trackCount}`)
+    }
+  }
+
+  const handleTimeRangeChange = (e) => {
+    const value = e.target.value
+    setTimeRange(value)
+    setUseCustomRange(value === 'custom')
+    
+    if (value !== 'custom') {
+      setFromDate(null)
+      setToDate(null)
+    }
   }
 
   return (
@@ -71,7 +104,7 @@ function Home() {
             <select
               id="timeRange"
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={handleTimeRangeChange}
               className="input-field w-full"
             >
               {timeRanges.map((range) => (
@@ -81,6 +114,18 @@ function Home() {
               ))}
             </select>
           </div>
+
+          {useCustomRange && (
+            <div>
+              <DateRangeSelector
+                fromDate={fromDate}
+                toDate={toDate}
+                onFromDateChange={setFromDate}
+                onToDateChange={setToDate}
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
           <div>
             <label htmlFor="trackCount" className="block text-sm font-medium text-dark-200 mb-2">
@@ -102,7 +147,7 @@ function Home() {
 
           <button
             type="submit"
-            disabled={isLoading || !username.trim()}
+            disabled={isLoading || !username.trim() || (useCustomRange && (!fromDate || !toDate))}
             className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (

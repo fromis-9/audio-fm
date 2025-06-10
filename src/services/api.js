@@ -24,7 +24,7 @@ async function checkDemoMode() {
 }
 
 export const lastfmApi = {
-  async getTopTracks(username, period = '1month', limit = 50) {
+  async getTopTracks(username, period = '1month', limit = 50, fromDate = null, toDate = null) {
     await checkDemoMode()
     
     // If backend is not available, fall back to demo data
@@ -60,15 +60,28 @@ export const lastfmApi = {
     }
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/lastfm/top-tracks`, {
-        params: {
-          username,
-          period,
-          limit
-        }
-      })
-
-      return response.data
+      // Use custom date range if provided
+      if (fromDate && toDate) {
+        const response = await axios.get(`${API_BASE_URL}/api/lastfm/top-tracks-range`, {
+          params: {
+            username,
+            from: Math.floor(fromDate.getTime() / 1000),
+            to: Math.floor(toDate.getTime() / 1000),
+            limit
+          }
+        })
+        return response.data
+      } else {
+        // Use predefined period
+        const response = await axios.get(`${API_BASE_URL}/api/lastfm/top-tracks`, {
+          params: {
+            username,
+            period,
+            limit
+          }
+        })
+        return response.data
+      }
     } catch (error) {
       console.error('Last.fm API error:', error)
       

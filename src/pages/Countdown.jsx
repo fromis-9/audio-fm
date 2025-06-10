@@ -22,12 +22,18 @@ function Countdown() {
   const username = searchParams.get('user')
   const period = searchParams.get('period')
   const limit = parseInt(searchParams.get('limit')) || 20
+  const fromTimestamp = searchParams.get('from')
+  const toTimestamp = searchParams.get('to')
+  
+  // Convert timestamps to Date objects if they exist
+  const fromDate = fromTimestamp ? new Date(parseInt(fromTimestamp) * 1000) : null
+  const toDate = toTimestamp ? new Date(parseInt(toTimestamp) * 1000) : null
 
   useEffect(() => {
     if (username && !isLoadingRef.current) {
       fetchAndPreparePlaylist()
     }
-  }, [username, period, limit])
+  }, [username, period, limit, fromTimestamp, toTimestamp])
 
   const fetchAndPreparePlaylist = async () => {
     try {
@@ -39,7 +45,7 @@ function Countdown() {
       setLoadingProgress(0)
 
       // Fetch tracks from Last.fm
-      const lastfmTracks = await lastfmApi.getTopTracks(username, period, limit)
+      const lastfmTracks = await lastfmApi.getTopTracks(username, period, limit, fromDate, toDate)
       setLoadingProgress(20)
 
       if (!lastfmTracks.length) {
@@ -53,7 +59,7 @@ function Countdown() {
       // Process tracks in batches of 10 with delay between requests
       const BATCH_SIZE = 10
       const DELAY_BETWEEN_REQUESTS = 1000 // 1 second delay between requests
-
+      
       for (let i = 0; i < lastfmTracks.length; i++) {
         const track = lastfmTracks[i]
         const artist = track.artist?.name || track.artist
@@ -442,7 +448,10 @@ function Countdown() {
             {username}'s Top {limit} Tracks Countdown
           </h1>
           <p className="text-dark-300">
-            {tracks.length} tracks found • {period.replace(/(\d+)/, '$1 ')}
+            {tracks.length} tracks found • {fromDate && toDate 
+              ? `${fromDate.toLocaleDateString()} - ${toDate.toLocaleDateString()}`
+              : period.replace(/(\d+)/, '$1 ')
+            }
           </p>
         </div>
 
@@ -623,33 +632,33 @@ function Countdown() {
 
         {/* Track List */}
         {viewMode === 'list' && (
-          <div className="grid gap-4">
-            {tracks.map((track, index) => (
-              <div 
-                key={index}
+        <div className="grid gap-4">
+          {tracks.map((track, index) => (
+            <div 
+              key={index}
                 className={`rounded-lg p-4 flex items-center space-x-4 transition-all duration-200 ${
-                  currentIndex === index ? 'ring-2 ring-primary-500' : ''
-                }`}
+                currentIndex === index ? 'ring-2 ring-primary-500' : ''
+              }`}
                 style={{backgroundColor: '#101010'}}
-              >
-                <div className="text-primary-400 font-bold text-lg w-8 text-center">
-                  #{track.position}
-                </div>
-                <img 
-                  src={track.cover} 
-                  alt={`${track.title} cover`}
-                  className="w-12 h-12 rounded object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-white">{track.title}</h4>
-                  <p className="text-dark-300 text-sm">{track.artist}</p>
-                </div>
-                <div className="text-dark-400 text-sm">
-                  {track.playcount} plays
-                </div>
+            >
+              <div className="text-primary-400 font-bold text-lg w-8 text-center">
+                #{track.position}
               </div>
-            ))}
-          </div>
+              <img 
+                src={track.cover} 
+                alt={`${track.title} cover`}
+                className="w-12 h-12 rounded object-cover"
+              />
+              <div className="flex-1">
+                <h4 className="font-semibold text-white">{track.title}</h4>
+                <p className="text-dark-300 text-sm">{track.artist}</p>
+              </div>
+              <div className="text-dark-400 text-sm">
+                {track.playcount} plays
+              </div>
+            </div>
+          ))}
+        </div>
         )}
 
         <audio 

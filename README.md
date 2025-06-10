@@ -1,8 +1,8 @@
 <div align="center">
   <img src="public/img/afm.png" alt="audio.fm logo" width="120" height="120">
   
-  # audio.fm
-  
+# audio.fm
+
   Create narrated countdowns of your top Last.fm tracks with live audio previews.
 </div>
 
