@@ -69,7 +69,7 @@ function Home() {
   }
 
   return (
-    <div className="flex justify-center px-4 pt-16 pb-8">
+    <div className="flex justify-center px-4 pt-16 pb-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
 

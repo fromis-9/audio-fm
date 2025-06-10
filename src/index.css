@@ -35,7 +35,7 @@
   }
 
   .cta-section {
-    @apply mt-8 text-center px-4;
+    @apply mt-16 text-center px-4;
   }
 
   .cta-container {
