@@ -293,45 +293,90 @@ app.get('/api/deezer/search', rateLimit, async (req, res) => {
       return res.status(400).json({ error: 'Artist and track parameters required' })
     }
 
-    // Clean and format the search query
-    const cleanArtist = artist.replace(/[^\w\s]/g, '').trim()
-    const cleanTrack = track.replace(/[^\w\s]/g, '').trim()
-    const query = `artist:"${cleanArtist}" track:"${cleanTrack}"`
-
-    console.log(`🔍 Searching Deezer: ${query}`)
-
-    const response = await axios.get(`${DEEZER_BASE_URL}/search`, {
-      params: {
-        q: query,
-        limit: 1
-      }
-    })
-
-    const tracks = response.data?.data || []
-    if (tracks.length === 0) {
-      // Fallback to simpler search
-      const fallbackQuery = `${cleanArtist} ${cleanTrack}`
-      console.log(`🔍 Fallback search: ${fallbackQuery}`)
-      
-      const fallbackResponse = await axios.get(`${DEEZER_BASE_URL}/search`, {
-        params: {
-          q: fallbackQuery,
-          limit: 1
-        }
-      })
-      
-      const fallbackTracks = fallbackResponse.data?.data || []
-      if (fallbackTracks.length > 0) {
-        console.log(`✅ Found track: ${fallbackTracks[0].title} by ${fallbackTracks[0].artist.name}`)
-        res.json(fallbackTracks[0])
-      } else {
-        console.log(`❌ No track found for: ${artist} - ${track}`)
-        res.status(404).json({ error: 'Track not found' })
-      }
-    } else {
-      console.log(`✅ Found track: ${tracks[0].title} by ${tracks[0].artist.name}`)
-      res.json(tracks[0])
+    // Better cleaning that preserves CJK characters and other Unicode
+    const cleanText = (text) => {
+      return text
+        .replace(/[""'']/g, '"') // Normalize quotes
+        .replace(/[–—]/g, '-') // Normalize dashes
+        .replace(/[\[\](){}]/g, '') // Remove brackets and parentheses
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim()
     }
+
+    const cleanArtist = cleanText(artist)
+    const cleanTrack = cleanText(track)
+
+    // Skip search if both artist and track are empty after cleaning
+    if (!cleanArtist && !cleanTrack) {
+      console.log(`❌ No searchable content for: ${artist} - ${track}`)
+      return res.status(404).json({ error: 'Track not found' })
+    }
+
+    // Try different search strategies
+    const searchStrategies = [
+      // Strategy 1: Exact artist and track with quotes
+      cleanArtist && cleanTrack ? `artist:"${cleanArtist}" track:"${cleanTrack}"` : null,
+      // Strategy 2: Simple search with both terms
+      cleanArtist && cleanTrack ? `${cleanArtist} ${cleanTrack}` : null,
+      // Strategy 3: Just the track name if artist is empty/problematic
+      cleanTrack ? cleanTrack : null,
+      // Strategy 4: Just the artist if track is empty/problematic
+      cleanArtist ? cleanArtist : null
+    ].filter(Boolean) // Remove null strategies
+
+    console.log(`🔍 Searching Deezer for: ${artist} - ${track}`)
+
+    for (let i = 0; i < searchStrategies.length; i++) {
+      const query = searchStrategies[i]
+      console.log(`🔍 Strategy ${i + 1}: ${query}`)
+
+      try {
+        const response = await axios.get(`${DEEZER_BASE_URL}/search`, {
+          params: {
+            q: query,
+            limit: 5 // Get more results to find better matches
+          }
+        })
+
+        const tracks = response.data?.data || []
+        
+        if (tracks.length > 0) {
+          // Try to find the best match
+          let bestMatch = tracks[0] // Default to first result
+          
+          // Look for better matches if we have both artist and track info
+          if (cleanArtist && cleanTrack) {
+            const betterMatch = tracks.find(track => {
+              const trackArtist = track.artist?.name?.toLowerCase() || ''
+              const trackTitle = track.title?.toLowerCase() || ''
+              const searchArtist = cleanArtist.toLowerCase()
+              const searchTrack = cleanTrack.toLowerCase()
+              
+              // Check if artist name is similar (for different language variations)
+              const artistMatch = trackArtist.includes(searchArtist) || searchArtist.includes(trackArtist)
+              const titleMatch = trackTitle.includes(searchTrack) || searchTrack.includes(trackTitle)
+              
+              return artistMatch || titleMatch
+            })
+            
+            if (betterMatch) {
+              bestMatch = betterMatch
+            }
+          }
+          
+          console.log(`✅ Found track: ${bestMatch.title} by ${bestMatch.artist.name}`)
+          return res.json(bestMatch)
+        }
+      } catch (searchError) {
+        console.log(`❌ Search strategy ${i + 1} failed:`, searchError.message)
+        continue
+      }
+    }
+
+    // If all strategies failed
+    console.log(`❌ No track found for: ${artist} - ${track}`)
+    res.status(404).json({ error: 'Track not found' })
+
   } catch (error) {
     console.error('Deezer API error:', error.message)
     res.status(500).json({ 
